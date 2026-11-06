@@ -5,6 +5,7 @@ The screen is built ONCE at the desktop size (1380 x 860) and then scaled to fit
 the phone, so the layout looks exactly like the PC dashboard (landscape).
 Engine / strategy lives in bot_core.py.  Paper trading only.
 """
+import os
 from kivy.config import Config
 from kivy.utils import platform
 
@@ -67,9 +68,9 @@ class Box(BoxLayout):
         self._r.pos, self._r.size = self.pos, self.size
 
 
-def mklabel(text="", size=FONT, color=FG, bold=False, halign="left", **kw):
+def mklabel(text="", size=FONT, color=FG, bold=False, halign="left", valign="middle", **kw):
     l = Label(text=text, font_size=size, color=C(color), bold=bold,
-              halign=halign, valign="middle", **kw)
+              halign=halign, valign=valign, **kw)
     l.bind(size=lambda w, s: setattr(w, "text_size", s))
     return l
 
@@ -424,6 +425,21 @@ class NiftySweepApp(App):
     title = "NIFTY Liquidity Sweep"
 
     def build(self):
+        try:
+            return self._build()
+        except Exception:
+            import traceback
+            tb = traceback.format_exc()
+            try:
+                with open(os.path.join(self.user_data_dir, "crash.txt"), "w") as f:
+                    f.write(tb)
+            except Exception:
+                pass
+            lab = Label(text=tb, font_size="12sp", halign="left", valign="top")
+            lab.bind(size=lambda w, s: setattr(w, "text_size", s))
+            return lab
+
+    def _build(self):
         bc.set_data_dir(self.user_data_dir)
         self.eng = bc.Engine()
         self.eng.log("Paper trading only - no real orders. Spot: Yahoo ^NSEI. "
